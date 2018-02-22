@@ -11,10 +11,6 @@ int chksum(Packet* pkt) {
 }
 */
 
-int quit() {
-    return -1;
-}
-
 int ack_recv(Packet p1, Packet p2) {
     if (comp_packet(p1, p2)) {
 	printf("[+] ACK1 received.\n");
@@ -22,14 +18,14 @@ int ack_recv(Packet p1, Packet p2) {
     }
     printf("[-] ACK0 received.\n");
     return 0;
+
 }
 
 int check_argc(int argc, int n, char* exec) {
     if (argc != n) {
 	printf("usage: %s <port number> <server ip> <source file> <destination file>\n", exec);
-	return -1;
+	exit(-1);
     }
-    return 1;
 }
 
 int chksum(Packet *pkt, size_t size) {
@@ -55,7 +51,7 @@ void config_addr(struct sockaddr_in s, char *port, char *ip, socklen_t size, int
     
     if (inet_pton(AF_INET, ip, &s.sin_addr) <= 0) {
 	perror("inet_pton error occured");
-	quit();
+	exit(-1);
     }
     
     memset(s.sin_zero, '\0', sizeof(s.sin_zero));
@@ -63,28 +59,36 @@ void config_addr(struct sockaddr_in s, char *port, char *ip, socklen_t size, int
     
     if ((sock = socket(PF_INET, SOCK_DGRAM, 0)) < 0) {
 	perror("Could not create socket");
-	quit();
+	exit(-1);
     }
 }
 
 void initialize_file(FILE **fp, char *filename, char *mode) {
     if ((*fp = fopen(filename, mode)) == NULL) {
 	printf("File %s not found.\n", filename);
-	quit();
+	exit(-1);
     }
 }
 
-void send_name_to_server(Packet pkt, char *filename, int sock, struct sockaddr_in s, socklen_t size) {
+void send_name_to_server(Packet *pkt, char *filename, int sock, struct sockaddr_in s, socklen_t size) {
     strcpy(pkt.data, filename);
-    sendto(sock, (char*)&pkt, sizeof(pkt), 0, (struct sockaddr *)&s, size);
+    sendto(sock, pkt, sizeof(pkt), 0, (struct sockaddr *)&s, size);
     printf("Sent filename: [%s]\n", pkt.data);
 }
   
-void send_file_to_server(int bytes, Packet pkt, FILE **fp, int sock, struct sockaddr_in s, socklen_t size) {
+void send_file_to_server(int bytes, Packet *pkt, FILE **fp, int sock, struct sockaddr_in s, socklen_t size) {
     while ((bytes = fread(pkt.data, 1, sizeof(pkt), *fp)) > 0) { //hangs here
 	pkt.head.len = bytes;
 	printf("Sent data: [%s], Packet size: [%d]\n", pkt.data, pkt.head.len);
-	sendto(sock, (char*)&pkt, sizeof(pkt), 0, (struct sockaddr *)&s, size);
+	sendto(sock, pkt, sizeof(pkt), 0, (struct sockaddr *)&s, size);
+	
+	/*call select
+	rv = select(sock + 1, &readfds, NULL, NULL, &tv);
+	if (rv == 0) {
+	    //timeout, no data
+	} else if (rv == 1) {
+	    //data to be received
+	}*/
     }
 }
 

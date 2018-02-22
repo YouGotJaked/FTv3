@@ -1,10 +1,3 @@
-/* 
- * File:   server.c
- * Author: jakeday
- *
- * Created on January 29, 2018, 3:16 PM
- */
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/socket.h>
@@ -15,14 +8,6 @@
 #include <ctype.h>
 #include "protocol.h"
 #include "protocol.c"
-
-/*
- *  create UDP socket
- *  bind socket to specified port no
- *  loop forever
- *  read from UDP socket into message, getting client's IP and port no
- *  send string back to client
- */
 
 int main(int argc, char **argv) {
     int connfd = 0, bytes;
@@ -102,7 +87,8 @@ int main(int argc, char **argv) {
             printf("[-] ACK0 sent.\n");
         }
     }
-    exit: fclose(fp);
+    exit: 
+    fclose(fp);
     close(connfd);
     return 0;
 }
