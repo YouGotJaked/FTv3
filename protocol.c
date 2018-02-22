@@ -11,8 +11,8 @@ int chksum(Packet* pkt) {
 }
 */
 
-int ack_recv(Packet p1, Packet p2) {
-    if (comp_packet(p1, p2)) {
+int ack_recv(Packet *p1, Packet *p2) {
+    if (comp_packet(p1, p2) == 1) {
 	printf("[+] ACK1 received.\n");
 	return 1;
     }
@@ -28,21 +28,21 @@ int check_argc(int argc, int n, char* exec) {
     }
 }
 
-int chksum(Packet *pkt, size_t size) {
+int chksum(Packet *pkt) {
     int i;
     char *head = (char*)pkt;
     char csum = head[0];
     (*pkt).head.chksum = 0;
     
-    for (i = 0; i < size; i++) {
+    for (i = 0; i < sizeof(pkt); i++) {
         csum ^= head[i];
     }
     
     return (int)csum;
 }
 
-int comp_packet(Packet p1, Packet p2) {
-    return p1.head.len == p2.head.len && p1.head.chksum == p2.head.chksum;
+int comp_packet(Packet *p1, Packet *p2) {
+    return (*p1).head.len == (*p2).head.len && (*p1).head.chksum == (*p2).head.chksum;
 }
 
 void config_addr(struct sockaddr_in s, char *port, char *ip, socklen_t size, int sock) {
@@ -71,15 +71,15 @@ void initialize_file(FILE **fp, char *filename, char *mode) {
 }
 
 void send_name_to_server(Packet *pkt, char *filename, int sock, struct sockaddr_in s, socklen_t size) {
-    strcpy(pkt.data, filename);
+    strcpy((*pkt).data, filename);
     sendto(sock, pkt, sizeof(pkt), 0, (struct sockaddr *)&s, size);
-    printf("Sent filename: [%s]\n", pkt.data);
+    printf("Sent filename: [%s]\n", (*pkt).data);
 }
   
 void send_file_to_server(int bytes, Packet *pkt, FILE **fp, int sock, struct sockaddr_in s, socklen_t size) {
-    while ((bytes = fread(pkt.data, 1, sizeof(pkt), *fp)) > 0) { //hangs here
-	pkt.head.len = bytes;
-	printf("Sent data: [%s], Packet size: [%d]\n", pkt.data, pkt.head.len);
+    while ((bytes = fread((*pkt).data, 1, sizeof(pkt), *fp)) > 0) { //hangs here
+	(*pkt).head.len = bytes;
+	printf("Sent data: [%s], Packet size: [%d]\n", (*pkt).data, (*pkt).head.len);
 	sendto(sock, pkt, sizeof(pkt), 0, (struct sockaddr *)&s, size);
 	
 	/*call select
@@ -92,13 +92,13 @@ void send_file_to_server(int bytes, Packet *pkt, FILE **fp, int sock, struct soc
     }
 }
 
-void sent_packet(Packet pkt) {
-    if (pkt.head.len > 0) {
+void sent_packet(Packet *pkt) {
+    if ((*pkt).head.len > 0) {
 	printf("[+] Packet sent.\n");
-	pkt.head.seq_ack = 1;
+	(*pkt).head.seq_ack = 1;
     } else {
 	printf("[-] Packet not sent.\n");
-	pkt.head.seq_ack = 0;
+	(*pkt).head.seq_ack = 0;
     }
 }
 
