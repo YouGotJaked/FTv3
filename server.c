@@ -47,7 +47,6 @@ int main(int argc, char **argv) {
         //reset
         p_server.head.len = 0;
         p_server.head.chksum = 0;
-        int n=5;
         
         //read file name from client
         recvfrom(connfd, (char*)&p_client, sizeof(p_client), 0, (struct sockaddr *)&serv_storage, &addr_size);
@@ -75,7 +74,7 @@ int main(int argc, char **argv) {
         
         //send server side length and checksum;
         printf("Server len: %d\n",p_server.head.len);
-	p_server.head.chksum = chksum(&p_server, sizeof(p_server));
+        p_server.head.chksum = chksum(&p_server, sizeof(p_server));
         printf("Server checksum: %d\n",p_server.head.chksum);
         sendto(connfd, (char*)&p_server, sizeof(p_server), 0, (struct sockaddr *)&serv_storage, addr_size);
         sendto(connfd, (char*)&p_server, sizeof(p_server), 0, (struct sockaddr *)&serv_storage, addr_size);
@@ -87,8 +86,7 @@ int main(int argc, char **argv) {
             printf("[-] ACK0 sent.\n");
         }
     }
-    exit: 
-    fclose(fp);
+    exit: fclose(fp);
     close(connfd);
     return 0;
 }
